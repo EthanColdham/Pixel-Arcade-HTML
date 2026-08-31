@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>STACK TOWER 3D</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  :root {
+    --bg-deep: #eaf6ff;
+    --bg-mid: #ffffff;
+    --accent-yellow: #f4a300;
+    --accent-pink: #ff477e;
+    --accent-cyan: #0096c7;
+    --accent-green: #0aa88f;
+    --ink: #1b1a35;
+    --shadow: #100f24;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-deep);
+    font-family: 'Press Start 2P', monospace;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  #stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #frame {
+    position: relative;
+    width: min(100%, 480px);
+    height: 100%;
+    max-height: 800px;
+    background: linear-gradient(to bottom, #bde0fe 0%, #d7f0ff 38%, #ffe8d6 78%, #ffd8ad 100%);
+    border-left: 4px solid #8ecae6;
+    border-right: 4px solid #8ecae6;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 18px 16px;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .hud-box {
+    color: var(--ink);
+    font-size: 11px;
+    line-height: 1.8;
+    text-shadow: 2px 2px 0 var(--shadow);
+  }
+
+  .hud-box .label { color: var(--accent-cyan); font-size: 9px; }
+  .hud-box .value { font-size: 16px; color: var(--accent-yellow); }
+
+  .center-msg {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--ink);
+    pointer-events: none;
+    z-index: 5;
+    animation: blink 1.4s steps(2, start) infinite;
+  }
+
+  .center-msg .title {
+    font-size: 18px;
+    color: var(--accent-yellow);
+    text-shadow: 3px 3px 0 var(--shadow);
+    margin-bottom: 14px;
+  }
+
+  .center-msg .sub {
+    font-size: 9px;
+    color: var(--accent-cyan);
+    text-shadow: 2px 2px 0 var(--shadow);
+    line-height: 1.8;
+  }
+
+  @keyframes blink {
+    0%, 60% { opacity: 1; }
+    80% { opacity: 0.35; }
+    100% { opacity: 1; }
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5, 4, 20, 0.72);
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s steps(3);
+  }
+
+  .overlay.show { opacity: 1; pointer-events: all; }
+
+  .panel {
+    background: var(--bg-mid);
+    border: 4px solid var(--accent-pink);
+    box-shadow: 8px 8px 0 var(--shadow);
+    padding: 28px 24px;
+    text-align: center;
+    width: 82%;
+    max-width: 320px;
+  }
+
+  .panel .heading {
+    color: var(--accent-pink);
+    font-size: 16px;
+    text-shadow: 3px 3px 0 var(--shadow);
+    margin-bottom: 20px;
+  }
+
+  .panel .row {
+    display: flex;
+    justify-content: space-between;
+    color: var(--ink);
+    font-size: 10px;
+    margin-bottom: 10px;
+  }
+
+  .panel .row .num { color: var(--accent-pink); }
+
+  .panel .best-flag {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 8px;
+    color: var(--accent-green);
+  }
+
+  button.pixel-btn {
+    margin-top: 18px;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--ink);
+    background: var(--accent-yellow);
+    border: 4px solid var(--shadow);
+    box-shadow: 5px 5px 0 var(--shadow);
+    padding: 12px 18px;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  button.pixel-btn:active {
+    box-shadow: 2px 2px 0 var(--shadow);
+    transform: translate(3px, 3px);
+  }
+
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.12) 0px,
+      rgba(0,0,0,0.12) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: multiply;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="frame">
+    <canvas id="game"></canvas>
+
+    <div class="hud">
+      <div class="hud-box">
+        <div class="label">SCORE</div>
+        <div class="value" id="scoreVal">0</div>
+      </div>
+      <div class="hud-box" style="text-align:right;">
+        <div class="label">BEST</div>
+        <div class="value" id="bestVal">0</div>
+      </div>
+    </div>
+
+    <div class="center-msg" id="startMsg">
+      <div class="title">STACK TOWER</div>
+      <div class="sub">TAP OR PRESS SPACE<br>TO DROP THE BLOCK</div>
+    </div>
+
+    <div class="overlay" id="overOverlay">
+      <div class="panel">
+        <div class="heading">GAME OVER</div>
+        <div class="row"><span>SCORE</span><span class="num" id="finalScore">0</span></div>
+        <div class="row"><span>BEST</span><span class="num" id="finalBest">0</span></div>
+        <div class="best-flag" id="newBestFlag" style="visibility:hidden;">NEW BEST!</div>
+        <button class="pixel-btn" id="retryBtn">PLAY AGAIN</button>
+      </div>
+    </div>
+
+    <div class="scanlines"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const frame = document.getElementById('frame');
+  const startMsg = document.getElementById('startMsg');
+  const overOverlay = document.getElementById('overOverlay');
+  const scoreVal = document.getElementById('scoreVal');
+  const bestVal = document.getElementById('bestVal');
+  const finalScore = document.getElementById('finalScore');
+  const finalBest = document.getElementById('finalBest');
+  const newBestFlag = document.getElementById('newBestFlag');
+  const retryBtn = document.getElementById('retryBtn');
+
+  const PALETTE = ['#ff5277', '#ffd23f', '#3fdb8f', '#3fdcff', '#b57bff', '#ff9f4a'];
+  const BLOCK_HEIGHT = 30;
+  const BASE_SIZE = 128;
+  const RANGE = 150;
+  const PERFECT_MARGIN = 8;
+  const COS_A = Math.cos(30 * Math.PI / 180);
+  const SIN_A = Math.sin(30 * Math.PI / 180);
+
+  let W = 0, H = 0, DPR = 1;
+  let originX = 0, originY = 0;
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = frame.clientWidth;
+    H = frame.clientHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    originX = W / 2;
+    originY = H * 0.76;
+  }
+  window.addEventListener('resize', resize);
+
+  function proj(x, y, z) {
+    return {
+      sx: originX + (x - z) * COS_A,
+      sy: originY + (x + z) * SIN_A - y + scrollY
+    };
+  }
+  function rawAnchor(x, y, z) {
+    return (x + z) * SIN_A - y;
+  }
+
+  function shade(hex, amt) {
+    const n = parseInt(hex.slice(1), 16);
+    let r = (n >> 16) + amt, g = ((n >> 8) & 0xff) + amt, b = (n & 0xff) + amt;
+    r = Math.max(0, Math.min(255, r));
+    g = Math.max(0, Math.min(255, g));
+    b = Math.max(0, Math.min(255, b));
+    return `rgb(${r},${g},${b})`;
+  }
+
+  let state = 'ready';
+  let stack = [];
+  let moving = null;
+  let debris = [];
+  let particles = [];
+  let score = 0;
+  let best = 0;
+  let perfectStreak = 0;
+  let comboTexts = [];
+  let scrollY = 0;
+  let targetScrollY = 0;
+  let colorIndex = 0;
+  let shakeT = 0;
+
+  function nextColor() {
+    colorIndex = (colorIndex + 1) % PALETTE.length;
+    return PALETTE[colorIndex];
+  }
+
+  function updateScrollTarget(topBlock) {
+    const cx = topBlock.x0 + topBlock.w / 2;
+    const cz = topBlock.z0 + topBlock.d / 2;
+    const raw = rawAnchor(cx, topBlock.yTop, cz);
+    const naturalSy = originY + raw; // where it would sit on screen with no scroll
+    const thresholdRow = H * 0.38;
+    const needed = thresholdRow - naturalSy;
+    // only ever scroll up (never back down), and never scroll before it's needed
+    targetScrollY = Math.max(targetScrollY, needed, 0);
+  }
+
+  function reset() {
+    stack = [];
+    debris = [];
+    particles = [];
+    comboTexts = [];
+    score = 0;
+    perfectStreak = 0;
+    colorIndex = 0;
+    scrollY = 0;
+    targetScrollY = 0;
+
+    const base = {
+      x0: -BASE_SIZE / 2, z0: -BASE_SIZE / 2,
+      w: BASE_SIZE, d: BASE_SIZE,
+      yBase: 0, yTop: BLOCK_HEIGHT,
+      color: nextColor()
+    };
+    stack.push(base);
+    updateScrollTarget(base);
+    spawnMoving();
+    scoreVal.textContent = '0';
+  }
+
+  function spawnMoving() {
+    const prev = stack[stack.length - 1];
+    const axis = (stack.length % 2 === 1) ? 'x' : 'z';
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    const speed = Math.min(2.0 + stack.length * 0.09, 5.6);
+    const yBase = prev.yTop;
+    const yTop = yBase + BLOCK_HEIGHT;
+
+    if (axis === 'x') {
+      moving = {
+        axis, dir, speed,
+        x0: prev.x0, z0: prev.z0,
+        w: prev.w, d: prev.d,
+        yBase, yTop, color: nextColor()
+      };
+    } else {
+      moving = {
+        axis, dir, speed,
+        x0: prev.x0, z0: prev.z0,
+        w: prev.w, d: prev.d,
+        yBase, yTop, color: nextColor()
+      };
+    }
+  }
+
+  function makeDebris(x0, z0, w, d, yBase, color, vx, vz) {
+    debris.push({
+      x0, z0, w, d,
+      yBase, yTop: yBase + BLOCK_HEIGHT,
+      color, vx, vz, vy: -0.5
+    });
+  }
+
+  function burst(x, y, z, color) {
+    for (let i = 0; i < 12; i++) {
+      particles.push({
+        x, y, z,
+        vx: (Math.random() - 0.5) * 4,
+        vy: Math.random() * 3 + 1,
+        vz: (Math.random() - 0.5) * 4,
+        life: 30 + Math.random() * 10,
+        color
+      });
+    }
+  }
+
+  function registerPerfect(x, y, z, color) {
+    perfectStreak += 1;
+    const bonus = 1 + perfectStreak;
+    score += bonus;
+    burst(x, y, z, color);
+    shakeT = 8;
+    const label = perfectStreak > 1 ? `PERFECT x${perfectStreak}  +${bonus}` : `PERFECT  +${bonus}`;
+    comboTexts.push({ x, y: y + 26, z, text: label, life: 55, rise: 0 });
+  }
+
+  function registerNormal() {
+    perfectStreak = 0;
+    score += 1;
+  }
+
+  function drop() {
+    if (state === 'ready') {
+      state = 'playing';
+      startMsg.style.display = 'none';
+    }
+    if (state !== 'playing') return;
+
+    const prev = stack[stack.length - 1];
+    let placed, missed = false;
+
+    if (moving.axis === 'x') {
+      const lo = Math.max(prev.x0, moving.x0);
+      const hi = Math.min(prev.x0 + prev.w, moving.x0 + moving.w);
+      const len = hi - lo;
+      if (len <= 2) { missed = true; }
+      else {
+        const perfect = Math.abs(len - prev.w) < PERFECT_MARGIN && Math.abs(moving.x0 - prev.x0) < PERFECT_MARGIN;
+        if (perfect) {
+          placed = { x0: prev.x0, z0: moving.z0, w: prev.w, d: moving.d, yBase: moving.yBase, yTop: moving.yTop, color: moving.color };
+          registerPerfect(placed.x0 + placed.w / 2, placed.yTop, placed.z0 + placed.d / 2, moving.color);
+        } else {
+          placed = { x0: lo, z0: moving.z0, w: len, d: moving.d, yBase: moving.yBase, yTop: moving.yTop, color: moving.color };
+          registerNormal();
+          if (moving.x0 < lo) {
+            makeDebris(moving.x0, moving.z0, lo - moving.x0, moving.d, moving.yBase, moving.color, -2.4 - Math.random(), (Math.random() - 0.5) * 1.5);
+          }
+          if (moving.x0 + moving.w > hi) {
+            const lw = (moving.x0 + moving.w) - hi;
+            makeDebris(hi, moving.z0, lw, moving.d, moving.yBase, moving.color, 2.4 + Math.random(), (Math.random() - 0.5) * 1.5);
+          }
+        }
+      }
+    } else {
+      const lo = Math.max(prev.z0, moving.z0);
+      const hi = Math.min(prev.z0 + prev.d, moving.z0 + moving.d);
+      const len = hi - lo;
+      if (len <= 2) { missed = true; }
+      else {
+        const perfect = Math.abs(len - prev.d) < PERFECT_MARGIN && Math.abs(moving.z0 - prev.z0) < PERFECT_MARGIN;
+        if (perfect) {
+          placed = { x0: moving.x0, z0: prev.z0, w: moving.w, d: prev.d, yBase: moving.yBase, yTop: moving.yTop, color: moving.color };
+          registerPerfect(placed.x0 + placed.w / 2, placed.yTop, placed.z0 + placed.d / 2, moving.color);
+        } else {
+          placed = { x0: moving.x0, z0: lo, w: moving.w, d: len, yBase: moving.yBase, yTop: moving.yTop, color: moving.color };
+          registerNormal();
+          if (moving.z0 < lo) {
+            makeDebris(moving.x0, moving.z0, moving.w, lo - moving.z0, moving.yBase, moving.color, (Math.random() - 0.5) * 1.5, -2.4 - Math.random());
+          }
+          if (moving.z0 + moving.d > hi) {
+            const ld = (moving.z0 + moving.d) - hi;
+            makeDebris(moving.x0, hi, moving.w, ld, moving.yBase, moving.color, (Math.random() - 0.5) * 1.5, 2.4 + Math.random());
+          }
+        }
+      }
+    }
+
+    if (missed) {
+      const vx = moving.axis === 'x' ? moving.dir * 2.5 : (Math.random() - 0.5) * 1.5;
+      const vz = moving.axis === 'z' ? moving.dir * 2.5 : (Math.random() - 0.5) * 1.5;
+      makeDebris(moving.x0, moving.z0, moving.w, moving.d, moving.yBase, moving.color, vx, vz);
+      endGame();
+      return;
+    }
+
+    stack.push(placed);
+    scoreVal.textContent = String(score);
+    updateScrollTarget(placed);
+    spawnMoving();
+  }
+
+  function endGame() {
+    state = 'over';
+    if (score > best) {
+      best = score;
+      newBestFlag.style.visibility = 'visible';
+    } else {
+      newBestFlag.style.visibility = 'hidden';
+    }
+    bestVal.textContent = String(best);
+    finalScore.textContent = String(score);
+    finalBest.textContent = String(best);
+    setTimeout(() => overOverlay.classList.add('show'), 400);
+  }
+
+  function restart() {
+    overOverlay.classList.remove('show');
+    startMsg.style.display = 'block';
+    state = 'ready';
+    reset();
+  }
+
+  function drawCube(x0, z0, w, d, yBase, yTop, color) {
+    const topCol = shade(color, 42);
+    const rightCol = shade(color, -14);
+    const frontCol = shade(color, -58);
+
+    const A = proj(x0, yTop, z0);
+    const B = proj(x0 + w, yTop, z0);
+    const C = proj(x0 + w, yTop, z0 + d);
+    const D = proj(x0, yTop, z0 + d);
+    const F = proj(x0 + w, yBase, z0);
+    const G = proj(x0 + w, yBase, z0 + d);
+    const Hh = proj(x0, yBase, z0 + d);
+
+    ctx.strokeStyle = 'rgba(5,4,20,0.9)';
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(D.sx, D.sy); ctx.lineTo(C.sx, C.sy); ctx.lineTo(G.sx, G.sy); ctx.lineTo(Hh.sx, Hh.sy);
+    ctx.closePath();
+    ctx.fillStyle = frontCol; ctx.fill(); ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(B.sx, B.sy); ctx.lineTo(C.sx, C.sy); ctx.lineTo(G.sx, G.sy); ctx.lineTo(F.sx, F.sy);
+    ctx.closePath();
+    ctx.fillStyle = rightCol; ctx.fill(); ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(A.sx, A.sy); ctx.lineTo(B.sx, B.sy); ctx.lineTo(C.sx, C.sy); ctx.lineTo(D.sx, D.sy);
+    ctx.closePath();
+    ctx.fillStyle = topCol; ctx.fill(); ctx.stroke();
+  }
+
+  function drawGrid() {
+    const N = 5;
+    ctx.strokeStyle = 'rgba(27,26,53,0.13)';
+    ctx.lineWidth = 1;
+    for (let i = -N; i <= N; i++) {
+      const p1 = proj(i * 60, 0, -N * 60);
+      const p2 = proj(i * 60, 0, N * 60);
+      ctx.beginPath(); ctx.moveTo(p1.sx, p1.sy); ctx.lineTo(p2.sx, p2.sy); ctx.stroke();
+      const p3 = proj(-N * 60, 0, i * 60);
+      const p4 = proj(N * 60, 0, i * 60);
+      ctx.beginPath(); ctx.moveTo(p3.sx, p3.sy); ctx.lineTo(p4.sx, p4.sy); ctx.stroke();
+    }
+  }
+
+  function update() {
+    scrollY += (targetScrollY - scrollY) * 0.15;
+
+    if (state !== 'over' && moving) {
+      if (moving.axis === 'x') {
+        moving.x0 += moving.dir * moving.speed;
+        if (moving.x0 > RANGE) { moving.x0 = RANGE; moving.dir = -1; }
+        if (moving.x0 < -RANGE) { moving.x0 = -RANGE; moving.dir = 1; }
+      } else {
+        moving.z0 += moving.dir * moving.speed;
+        if (moving.z0 > RANGE) { moving.z0 = RANGE; moving.dir = -1; }
+        if (moving.z0 < -RANGE) { moving.z0 = -RANGE; moving.dir = 1; }
+      }
+    }
+
+    for (let i = debris.length - 1; i >= 0; i--) {
+      const b = debris[i];
+      b.vy -= 0.5;
+      b.x0 += b.vx; b.z0 += b.vz;
+      b.yBase += b.vy; b.yTop += b.vy;
+      if (b.yTop < -500) debris.splice(i, 1);
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.vy -= 0.2;
+      p.x += p.vx; p.y += p.vy; p.z += p.vz;
+      p.life -= 1;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    for (let i = comboTexts.length - 1; i >= 0; i--) {
+      const c = comboTexts[i];
+      c.rise += 0.6;
+      c.life -= 1;
+      if (c.life <= 0) comboTexts.splice(i, 1);
+    }
+
+    if (shakeT > 0) shakeT -= 1;
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    if (shakeT > 0) {
+      const s = shakeT;
+      ctx.translate((Math.random() - 0.5) * s * 0.5, (Math.random() - 0.5) * s * 0.5);
+    }
+
+    drawGrid();
+
+    for (const b of debris) drawCube(b.x0, b.z0, b.w, b.d, b.yBase, b.yTop, b.color);
+    for (const b of stack) drawCube(b.x0, b.z0, b.w, b.d, b.yBase, b.yTop, b.color);
+    if (state !== 'over' && moving) drawCube(moving.x0, moving.z0, moving.w, moving.d, moving.yBase, moving.yTop, moving.color);
+
+    for (const p of particles) {
+      const pr = proj(p.x, p.y, p.z);
+      ctx.globalAlpha = Math.max(p.life / 40, 0);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(pr.sx - 2, pr.sy - 2, 4, 4);
+      ctx.globalAlpha = 1;
+    }
+
+    for (const c of comboTexts) {
+      const pr = proj(c.x, c.y + c.rise, c.z);
+      ctx.globalAlpha = Math.max(c.life / 55, 0);
+      ctx.font = "10px 'Press Start 2P', monospace";
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#100f24';
+      ctx.fillText(c.text, pr.sx + 2, pr.sy + 2);
+      ctx.fillStyle = '#f4a300';
+      ctx.fillText(c.text, pr.sx, pr.sy);
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'left';
+    }
+
+    ctx.restore();
+  }
+
+  function loop() {
+    update();
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function handleInput(e) {
+    if (e) e.preventDefault();
+    if (state === 'over') return;
+    drop();
+  }
+
+  canvas.addEventListener('pointerdown', handleInput);
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') handleInput(e);
+    if (e.code === 'KeyR' && state === 'over') restart();
+  });
+  retryBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    restart();
+  });
+
+  resize();
+  reset();
+  loop();
+})();
+</script>
+
+</body>
+</html>
