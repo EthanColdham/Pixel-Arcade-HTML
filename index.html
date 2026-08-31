@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PIXEL ARCADE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  :root {
+    --bg-deep: #eaf6ff;
+    --bg-mid: #ffffff;
+    --ink: #1b1a35;
+    --shadow: #100f24;
+    --c1: #ff477e; /* pink */
+    --c2: #f4a300; /* yellow */
+    --c3: #0aa88f; /* green */
+    --c4: #0096c7; /* cyan */
+    --c5: #8338ec; /* purple */
+    --c6: #ff9f4a; /* orange */
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: linear-gradient(to bottom, #bde0fe 0%, #d7f0ff 30%, #eaf6ff 65%, #ffe8d6 100%);
+    font-family: 'Press Start 2P', monospace;
+    color: var(--ink);
+  }
+
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 28px 18px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  header .badge {
+    display: inline-block;
+    background: var(--shadow);
+    color: #ffe8a3;
+    font-size: 8px;
+    padding: 6px 10px;
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+  }
+
+  header h1 {
+    font-size: clamp(20px, 5vw, 32px);
+    margin: 0 0 12px;
+    color: var(--ink);
+    text-shadow: 3px 3px 0 var(--c2), 6px 6px 0 var(--shadow);
+    line-height: 1.4;
+  }
+
+  header p {
+    font-size: 9px;
+    color: #3a3660;
+    line-height: 1.9;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 18px;
+    margin-top: 34px;
+  }
+
+  .card {
+    background: var(--bg-mid);
+    border: 4px solid var(--shadow);
+    box-shadow: 6px 6px 0 rgba(16,15,36,0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.12s steps(2), box-shadow 0.12s steps(2);
+  }
+
+  .card.live {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .card.live:hover,
+  .card.live:focus-visible {
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0 rgba(16,15,36,0.3);
+    outline: none;
+  }
+
+  .card.live:active {
+    transform: translate(1px, 1px);
+    box-shadow: 3px 3px 0 rgba(16,15,36,0.3);
+  }
+
+  .thumb {
+    height: 108px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .thumb.locked {
+    background: repeating-linear-gradient(
+      45deg,
+      #e7e4f5,
+      #e7e4f5 6px,
+      #dcd8ee 6px,
+      #dcd8ee 12px
+    );
+  }
+
+  .card-body {
+    padding: 14px 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .card-title {
+    font-size: 10px;
+    line-height: 1.6;
+    min-height: 32px;
+  }
+
+  .card-sub {
+    font-size: 7px;
+    color: #6a6690;
+    letter-spacing: 0.5px;
+  }
+
+  .cta {
+    margin-top: auto;
+    font-size: 9px;
+    text-align: center;
+    padding: 9px 6px;
+    border: 3px solid var(--shadow);
+  }
+
+  .cta.play {
+    background: var(--c2);
+    color: var(--ink);
+    box-shadow: 3px 3px 0 var(--shadow);
+  }
+
+  .cta.soon {
+    background: #f1eff9;
+    color: #9490b5;
+    border-color: #c9c5e0;
+  }
+
+  /* stack tower icon */
+  .icon-stack {
+    width: 62px;
+    height: 62px;
+    position: relative;
+  }
+  .icon-stack div {
+    position: absolute;
+    left: 50%;
+    border: 2px solid var(--shadow);
+  }
+  .icon-stack .b1 { width: 54px; height: 14px; bottom: 0; transform: translateX(-50%); background: var(--c1); }
+  .icon-stack .b2 { width: 42px; height: 14px; bottom: 15px; transform: translateX(-50%); background: var(--c2); }
+  .icon-stack .b3 { width: 30px; height: 14px; bottom: 30px; transform: translateX(-50%); background: var(--c3); }
+  .icon-stack .b4 { width: 20px; height: 14px; bottom: 45px; transform: translateX(-50%); background: var(--c4); }
+
+  .icon-lock {
+    width: 34px;
+    height: 34px;
+    position: relative;
+  }
+  .icon-lock .shackle {
+    position: absolute;
+    top: 0; left: 8px;
+    width: 18px; height: 14px;
+    border: 3px solid #9490b5;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+  }
+  .icon-lock .body {
+    position: absolute;
+    top: 12px; left: 3px;
+    width: 28px; height: 20px;
+    background: #b6b2d4;
+    border: 2px solid var(--shadow);
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 44px;
+    font-size: 8px;
+    color: #6a6690;
+    line-height: 2;
+  }
+
+  @media (max-width: 420px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="badge">12-GAME CABINET</div>
+    <h1>PIXEL ARCADE</h1>
+    <p>PICK A CABINET AND TAP PLAY.<br>MORE GAMES DROP INTO THE OPEN SLOTS OVER TIME.</p>
+  </header>
+
+  <div class="grid">
+
+    <a class="card live" href="stack-tower-3d.html">
+      <div class="thumb" style="background:#ffe6ee;">
+        <div class="icon-stack">
+          <div class="b1"></div>
+          <div class="b2"></div>
+          <div class="b3"></div>
+          <div class="b4"></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 01</div>
+        <div class="card-title">STACK TOWER</div>
+        <div class="cta play">PLAY ▸</div>
+      </div>
+    </a>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 02</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 03</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 04</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 05</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 06</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 07</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 08</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 09</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 10</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 11</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+      <div class="card-body">
+        <div class="card-sub">CABINET 12</div>
+        <div class="card-title">EMPTY SLOT</div>
+        <div class="cta soon">COMING SOON</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>1 OF 12 CABINETS ONLINE</footer>
+</div>
+
+</body>
+</html>
