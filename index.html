@@ -198,6 +198,25 @@
     border: 2px solid var(--shadow);
   }
 
+  /* snake icon */
+  .icon-snake {
+    width: 62px;
+    height: 62px;
+    position: relative;
+  }
+  .icon-snake div {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--shadow);
+  }
+  .icon-snake .s1 { left: 6px;  top: 30px; background: var(--c3); }
+  .icon-snake .s2 { left: 18px; top: 30px; background: var(--c3); }
+  .icon-snake .s3 { left: 30px; top: 30px; background: var(--c3); }
+  .icon-snake .s4 { left: 30px; top: 18px; background: var(--c3); }
+  .icon-snake .s5 { left: 30px; top: 6px;  background: #0aa88f; }
+  .icon-snake .apple { left: 6px; top: 6px; background: var(--c1); border-radius: 3px; }
+
   footer {
     text-align: center;
     margin-top: 44px;
@@ -238,14 +257,19 @@
       </div>
     </a>
 
-    <div class="card">
-      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+    <a class="card live" href="snake.html">
+      <div class="thumb" style="background:#e8fbf4;">
+        <div class="icon-snake">
+          <div class="s1"></div><div class="s2"></div><div class="s3"></div><div class="s4"></div><div class="s5"></div>
+          <div class="apple"></div>
+        </div>
+      </div>
       <div class="card-body">
         <div class="card-sub">CABINET 02</div>
-        <div class="card-title">EMPTY SLOT</div>
-        <div class="cta soon">COMING SOON</div>
+        <div class="card-title">SNAKE</div>
+        <div class="cta play">PLAY ▸</div>
       </div>
-    </div>
+    </a>
 
     <div class="card">
       <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
@@ -339,7 +363,7 @@
 
   </div>
 
-  <footer>1 OF 12 CABINETS ONLINE</footer>
+  <footer>2 OF 12 CABINETS ONLINE</footer>
 </div>
 
 </body>
