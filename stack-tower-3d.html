@@ -298,6 +298,11 @@
   let particles = [];
   let score = 0;
   let best = 0;
+  try {
+    const saved = localStorage.getItem('stackTowerBestScore');
+    if (saved !== null) best = parseInt(saved, 10) || 0;
+  } catch (e) { /* localStorage unavailable, best just stays 0 for this session */ }
+  bestVal.textContent = String(best);
   let perfectStreak = 0;
   let comboTexts = [];
   let scrollY = 0;
@@ -479,6 +484,7 @@
     state = 'over';
     if (score > best) {
       best = score;
+      try { localStorage.setItem('stackTowerBestScore', String(best)); } catch (e) { /* ignore */ }
       newBestFlag.style.visibility = 'visible';
     } else {
       newBestFlag.style.visibility = 'hidden';

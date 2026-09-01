@@ -272,6 +272,12 @@
   let score = 0, lines = 0, best = 0, state = 'ready';
   let tickMs = 650, acc = 0, lastT = 0;
 
+  try {
+    const saved = localStorage.getItem('tetrisBestScore');
+    if (saved !== null) best = parseInt(saved, 10) || 0;
+  } catch (e) { /* localStorage unavailable, best just stays 0 for this session */ }
+  bestVal.textContent = String(best);
+
   function emptyBoard() {
     const b = [];
     for (let y = 0; y < ROWS; y++) b.push(new Array(COLS).fill(null));
@@ -409,7 +415,11 @@
 
   function endGame() {
     state = 'over';
-    if (score > best) { best = score; newBestFlag.style.visibility = 'visible'; }
+    if (score > best) {
+      best = score;
+      try { localStorage.setItem('tetrisBestScore', String(best)); } catch (e) { /* ignore */ }
+      newBestFlag.style.visibility = 'visible';
+    }
     else newBestFlag.style.visibility = 'hidden';
     bestVal.textContent = String(best);
     finalScore.textContent = String(score);
