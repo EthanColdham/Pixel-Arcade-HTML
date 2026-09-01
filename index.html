@@ -217,6 +217,23 @@
   .icon-snake .s5 { left: 30px; top: 6px;  background: #0aa88f; }
   .icon-snake .apple { left: 6px; top: 6px; background: var(--c1); border-radius: 3px; }
 
+  /* tetris icon */
+  .icon-tetris {
+    width: 62px;
+    height: 62px;
+    position: relative;
+  }
+  .icon-tetris div {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--shadow);
+  }
+  .icon-tetris .t1 { left: 10px; top: 34px; background: var(--c5); }
+  .icon-tetris .t2 { left: 24px; top: 34px; background: var(--c5); }
+  .icon-tetris .t3 { left: 24px; top: 20px; background: #a366f0; }
+  .icon-tetris .t4 { left: 38px; top: 20px; background: #a366f0; }
+
   footer {
     text-align: center;
     margin-top: 44px;
@@ -271,14 +288,18 @@
       </div>
     </a>
 
-    <div class="card">
-      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+    <a class="card live" href="tetris.html">
+      <div class="thumb" style="background:#f1eaff;">
+        <div class="icon-tetris">
+          <div class="t1"></div><div class="t2"></div><div class="t3"></div><div class="t4"></div>
+        </div>
+      </div>
       <div class="card-body">
         <div class="card-sub">CABINET 03</div>
-        <div class="card-title">EMPTY SLOT</div>
-        <div class="cta soon">COMING SOON</div>
+        <div class="card-title">TETRIS</div>
+        <div class="cta play">PLAY ▸</div>
       </div>
-    </div>
+    </a>
 
     <div class="card">
       <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
@@ -363,7 +384,7 @@
 
   </div>
 
-  <footer>2 OF 12 CABINETS ONLINE</footer>
+  <footer>3 OF 12 CABINETS ONLINE</footer>
 </div>
 
 </body>
