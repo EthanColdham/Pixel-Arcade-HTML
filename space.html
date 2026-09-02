@@ -274,8 +274,10 @@
   let W = 0, H = 0, DPR = 1;
   function resize() {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = boardWrap.clientWidth;
-    H = boardWrap.clientHeight;
+    const newW = boardWrap.clientWidth;
+    const newH = boardWrap.clientHeight;
+    if (newW <= 0 || newH <= 0) return;
+    W = newW; H = newH;
     canvas.width = W * DPR;
     canvas.height = H * DPR;
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);

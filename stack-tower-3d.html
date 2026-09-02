@@ -261,8 +261,10 @@
 
   function resize() {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = frame.clientWidth;
-    H = frame.clientHeight;
+    const newW = frame.clientWidth;
+    const newH = frame.clientHeight;
+    if (newW <= 0 || newH <= 0) return;
+    W = newW; H = newH;
     canvas.width = W * DPR;
     canvas.height = H * DPR;
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
