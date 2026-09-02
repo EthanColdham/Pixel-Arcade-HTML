@@ -282,17 +282,20 @@
   }
   window.addEventListener('resize', resize);
 
-  // ---------- persistent progression ----------
-  const SAVE_KEY = 'astroBlasterSave';
-  let save = { credits: 0, bulletLevel: 0, speedLevel: 0, bountyLevel: 0, best: 0 };
+  // ---------- best score persists; credits & upgrades reset every round ----------
+  const BEST_KEY = 'astroBlasterBest';
+  let best = 0;
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) Object.assign(save, JSON.parse(raw));
-  } catch (e) { /* localStorage unavailable, progress won't persist this session */ }
+    const raw = localStorage.getItem(BEST_KEY);
+    if (raw !== null) best = parseInt(raw, 10) || 0;
+  } catch (e) { /* localStorage unavailable, best just stays 0 for this session */ }
 
-  function persist() {
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ }
+  function persistBest() {
+    try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) { /* ignore */ }
   }
+
+  let save = { credits: 0, bulletLevel: 0, speedLevel: 0, bountyLevel: 0 };
+  function persist() { /* no-op: credits & upgrades no longer saved between rounds */ }
 
   function bulletCount() { return 1 + save.bulletLevel; }
   function bulletCost() { return Math.round(50 * Math.pow(10, save.bulletLevel)); }
@@ -390,7 +393,7 @@
     state = 'ready';
     scoreVal.textContent = '0';
     creditsVal.textContent = String(save.credits);
-    bestVal.textContent = String(save.best);
+    bestVal.textContent = String(best);
     startMsg.style.display = 'block';
     if (!stars || stars.length === 0) makeStars();
   }
@@ -475,16 +478,16 @@
 
   function endGame() {
     state = 'over';
-    if (score > save.best) {
-      save.best = score;
+    if (score > best) {
+      best = score;
+      persistBest();
       newBestFlag.style.visibility = 'visible';
     } else {
       newBestFlag.style.visibility = 'hidden';
     }
-    persist();
-    bestVal.textContent = String(save.best);
+    bestVal.textContent = String(best);
     finalScore.textContent = String(score);
-    finalBest.textContent = String(save.best);
+    finalBest.textContent = String(best);
     setTimeout(() => overOverlay.classList.add('show'), 300);
   }
 
@@ -704,20 +707,17 @@
 
     const engineGlow = Date.now() < multishotUntil ? '#ff477e' : '#3fd6ff';
 
-    // wing pods (blocky grey, drawn first) + cannons mounted on them
+    // arrow-shaped wings, rooted 2/3 of the way down the pod, swept back to a point
     const barrelsLeft = Math.min(Math.ceil(n / 2), 4);
     const barrelsRight = Math.min(Math.floor(n / 2), 4);
     for (const side of [-1, 1]) {
-      ctx.save();
-      ctx.translate(side * r * 0.5, -r * 0.05);
       ctx.beginPath();
-      ctx.moveTo(0, -r * 0.38);
-      ctx.lineTo(side * r * 0.55, -r * 0.30);
-      ctx.lineTo(side * r * 0.55, r * 0.10);
-      ctx.lineTo(side * r * 0.32, r * 0.38);
-      ctx.lineTo(0, r * 0.30);
+      ctx.moveTo(side * r * 0.18, r * 0.30);
+      ctx.lineTo(side * r * 0.24, r * 0.58);
+      ctx.lineTo(side * r * 1.15, r * 1.05);
+      ctx.lineTo(side * r * 0.55, r * 0.44);
       ctx.closePath();
-      const pgrad = ctx.createLinearGradient(0, -r*0.38, 0, r*0.38);
+      const pgrad = ctx.createLinearGradient(0, r*0.3, 0, r*1.05);
       pgrad.addColorStop(0, '#b7bccb');
       pgrad.addColorStop(1, '#767c8e');
       ctx.fillStyle = pgrad;
@@ -726,34 +726,29 @@
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.fillRect(side>0?0:-side*r*0.02, -r*0.28, side*r*0.32, r*0.06);
-      ctx.restore();
-
       const barrels = side < 0 ? barrelsLeft : barrelsRight;
       for (let i = 0; i < barrels; i++) {
-        const bx = side * (r*0.78 + i*5);
+        const bx = side * (r*0.72 + i*5);
         ctx.fillStyle = '#3a3f4d';
-        ctx.fillRect(bx - 1.6, -r*0.5, 3.2, 11);
+        ctx.fillRect(bx - 1.6, r*0.42 - 12, 3.2, 12);
         ctx.strokeStyle = '#14161d';
         ctx.lineWidth = 1;
-        ctx.strokeRect(bx - 1.6, -r*0.5, 3.2, 11);
+        ctx.strokeRect(bx - 1.6, r*0.42 - 12, 3.2, 12);
         ctx.fillStyle = engineGlow;
-        ctx.fillRect(bx - 1.2, -r*0.5, 2.4, 2.4);
+        ctx.fillRect(bx - 1.2, r*0.42 - 12, 2.4, 2.4);
       }
     }
 
-    // main hull (rounded diamond, nose to tail)
+    // slim rounded pod body, nose to tail
     ctx.beginPath();
-    ctx.moveTo(0, -r*1.6);
-    ctx.quadraticCurveTo(r*0.42, -r*0.85, r*0.5, -r*0.05);
-    ctx.quadraticCurveTo(r*0.42, r*0.55, r*0.28, r*0.95);
-    ctx.lineTo(0, r*1.2);
-    ctx.lineTo(-r*0.28, r*0.95);
-    ctx.quadraticCurveTo(-r*0.42, r*0.55, -r*0.5, -r*0.05);
-    ctx.quadraticCurveTo(-r*0.42, -r*0.85, 0, -r*1.6);
+    ctx.moveTo(0, -r*1.5);
+    ctx.quadraticCurveTo(r*0.30, -r*1.15, r*0.26, -r*0.4);
+    ctx.quadraticCurveTo(r*0.28, r*0.4, r*0.16, r*1.15);
+    ctx.lineTo(-r*0.16, r*1.15);
+    ctx.quadraticCurveTo(-r*0.28, r*0.4, -r*0.26, -r*0.4);
+    ctx.quadraticCurveTo(-r*0.30, -r*1.15, 0, -r*1.5);
     ctx.closePath();
-    const hgrad = ctx.createLinearGradient(-r*0.5, 0, r*0.5, 0);
+    const hgrad = ctx.createLinearGradient(-r*0.3, 0, r*0.3, 0);
     hgrad.addColorStop(0, '#2b2470');
     hgrad.addColorStop(0.5, '#5b4fd6');
     hgrad.addColorStop(1, '#2b2470');
@@ -763,18 +758,17 @@
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // segment panel lines
+    // segment panel line near the wing root
     ctx.strokeStyle = 'rgba(15,11,40,0.4)';
     ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.moveTo(-r*0.35, r*0.15); ctx.lineTo(r*0.35, r*0.15); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-r*0.3, r*0.55); ctx.lineTo(r*0.3, r*0.55); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-r*0.2, r*0.32); ctx.lineTo(r*0.2, r*0.32); ctx.stroke();
 
     // dark pointed canopy
     ctx.beginPath();
-    ctx.moveTo(0, -r*1.55);
-    ctx.quadraticCurveTo(r*0.24, -r*0.95, r*0.16, -r*0.45);
-    ctx.lineTo(-r*0.16, -r*0.45);
-    ctx.quadraticCurveTo(-r*0.24, -r*0.95, 0, -r*1.55);
+    ctx.moveTo(0, -r*1.48);
+    ctx.quadraticCurveTo(r*0.18, -r*0.95, r*0.12, -r*0.45);
+    ctx.lineTo(-r*0.12, -r*0.45);
+    ctx.quadraticCurveTo(-r*0.18, -r*0.95, 0, -r*1.48);
     ctx.closePath();
     ctx.fillStyle = '#0d0d1a';
     ctx.fill();
@@ -783,7 +777,7 @@
     ctx.stroke();
     ctx.fillStyle = 'rgba(130,140,255,0.35)';
     ctx.beginPath();
-    ctx.ellipse(-r*0.05, -r*1.1, r*0.05, r*0.18, 0.15, 0, Math.PI*2);
+    ctx.ellipse(-r*0.04, -r*1.05, r*0.04, r*0.16, 0.15, 0, Math.PI*2);
     ctx.fill();
 
     // rear engine glow
@@ -795,8 +789,8 @@
     if (Date.now() < multishotUntil) {
       ctx.fillStyle = 'rgba(255,71,126,0.85)';
       ctx.beginPath();
-      ctx.moveTo(-r*0.45, r*1.2);
-      ctx.lineTo(r*0.45, r*1.2);
+      ctx.moveTo(-r*0.35, r*1.2);
+      ctx.lineTo(r*0.35, r*1.2);
       ctx.lineTo(0, r*1.2 + 10 + Math.sin(Date.now()/80)*3);
       ctx.closePath();
       ctx.fill();
@@ -822,11 +816,36 @@
       ctx.strokeStyle = '#100f24';
       ctx.lineWidth = 2;
       ctx.stroke();
-      ctx.fillStyle = '#fff';
-      ctx.font = "9px 'Press Start 2P', monospace";
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(p.type === 'multishot' ? 'M' : 'S', 0, 1);
+
+      if (p.type === 'multishot') {
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.moveTo(0, -p.r*0.72);
+        ctx.lineTo(-p.r*0.28, -p.r*0.05);
+        ctx.lineTo(p.r*0.28, -p.r*0.05);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(0, p.r*0.72);
+        ctx.lineTo(-p.r*0.28, p.r*0.05);
+        ctx.lineTo(p.r*0.28, p.r*0.05);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(0, 0, p.r*0.62, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(0, -p.r*0.42);
+        ctx.moveTo(0, 0); ctx.lineTo(p.r*0.32, p.r*0.10);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, 1.4, 0, Math.PI*2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+      }
       ctx.restore();
     }
 
