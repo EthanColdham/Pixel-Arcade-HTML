@@ -256,6 +256,29 @@
   .icon-space .rock1 { width: 16px; height: 16px; left: 6px; top: 4px; background: #8a7a68; }
   .icon-space .rock2 { width: 10px; height: 10px; left: 40px; top: 10px; background: #7a8a94; }
 
+  /* flap icon */
+  .icon-flap {
+    width: 62px;
+    height: 62px;
+    position: relative;
+  }
+  .icon-flap .bird {
+    position: absolute;
+    left: 14px; top: 24px;
+    width: 16px; height: 14px;
+    background: #ff9f4a;
+    border: 2px solid var(--shadow);
+    border-radius: 50%;
+  }
+  .icon-flap .pipe1, .icon-flap .pipe2 {
+    position: absolute;
+    width: 12px;
+    background: #3fb87a;
+    border: 2px solid var(--shadow);
+  }
+  .icon-flap .pipe1 { left: 40px; top: 0; height: 24px; }
+  .icon-flap .pipe2 { left: 40px; top: 38px; height: 24px; }
+
   footer {
     text-align: center;
     margin-top: 44px;
@@ -337,14 +360,19 @@
       </div>
     </a>
 
-    <div class="card">
-      <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
+    <a class="card live" href="flap.html">
+      <div class="thumb" style="background:#e0f2ff;">
+        <div class="icon-flap">
+          <div class="bird"></div>
+          <div class="pipe1"></div><div class="pipe2"></div>
+        </div>
+      </div>
       <div class="card-body">
         <div class="card-sub">CABINET 05</div>
-        <div class="card-title">EMPTY SLOT</div>
-        <div class="cta soon">COMING SOON</div>
+        <div class="card-title">FLAP</div>
+        <div class="cta play">PLAY ▸</div>
       </div>
-    </div>
+    </a>
 
     <div class="card">
       <div class="thumb locked"><div class="icon-lock"><div class="shackle"></div><div class="body"></div></div></div>
@@ -411,7 +439,7 @@
 
   </div>
 
-  <footer>4 OF 12 CABINETS ONLINE</footer>
+  <footer>5 OF 12 CABINETS ONLINE</footer>
 </div>
 
 </body>
